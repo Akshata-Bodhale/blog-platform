@@ -1049,4 +1049,4 @@ def help_page():
 if __name__ == '__main__':
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(os.path.join(UPLOAD_FOLDER, 'profiles'), exist_ok=True)
-    app.run(debug=True)
+    app.run(debug=False)
