@@ -422,9 +422,23 @@ def create_blog():
         return redirect(url_for('create_profile'))
     if request.method == 'POST':
         title       = request.form['title'].strip()
-        description = request.form['description']
+        description = request.form['description'].strip()
         category    = request.form['category']
         image_path  = save_file(request.files.get('image'))
+
+    # ── validation ──
+        if len(title) < 5:
+            flash('Title must be at least 5 characters.', 'error')
+            return redirect(url_for('create_blog'))
+        if len(title) > 255:
+            flash('Title is too long (max 255 characters).', 'error')
+            return redirect(url_for('create_blog'))
+        if len(description) < 20:
+            flash('Content is too short. Please write at least 20 characters.', 'error')
+            return redirect(url_for('create_blog'))
+        if category not in CATEGORIES:
+            flash('Invalid category selected.', 'error')
+            return redirect(url_for('create_blog'))
 
         # trusted authors go live immediately; others are pending
         cur = get_db()
