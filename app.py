@@ -640,6 +640,9 @@ def add_comment(blog_id):
     if not content:
         flash('Comment cannot be empty.', 'error')
         return redirect(url_for('blog_detail', blog_id=blog_id))
+    if len(content) > 1000:                                          
+        flash('Comment too long (max 1000 characters).', 'error')   
+        return redirect(url_for('blog_detail', blog_id=blog_id))    
     cur = get_db()
     cur.execute(
         "INSERT INTO comments (blog_id, user_id, content, created_at) VALUES (%s,%s,%s,%s)",
