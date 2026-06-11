@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Edit Blog – InkSpire{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.snow.css">
+<style>
+    #quill-editor { min-height: 280px; font-size: 15px; background: #fff; }
+    .ql-toolbar  { border: 1px solid #d0d8e4 !important; border-radius: 5px 5px 0 0; }
+    .ql-container{ border: 1px solid #d0d8e4 !important; border-top: none !important; border-radius: 0 0 5px 5px; }
+    .current-img { max-width:100%; max-height:180px; border-radius:6px; display:block; margin-bottom:8px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div style="background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.07); padding:30px; max-width:820px; margin:0 auto;">
+
+        <h4 style="color:#1e3a5f; font-weight:700; margin-bottom:4px;">Edit Blog</h4>
+        <p class="text-muted mb-4" style="font-size:13px;">Update your blog content or replace the image.</p>
+
+        <form method="POST" enctype="multipart/form-data" id="editForm">
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold" style="font-size:14px;">Title</label>
+                <input type="text" name="title" class="form-control"
+                       value="{{ blog[1] }}" required maxlength="255"
+                       style="font-size:15px; border:1px solid #d0d8e4; padding:10px 14px;">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold" style="font-size:14px;">Category</label>
+                <select name="category" class="form-select" required
+                        style="font-size:14px; border:1px solid #d0d8e4; padding:10px 14px;">
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if cat == blog[4] %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold" style="font-size:14px;">Content</label>
+                <div id="quill-editor"></div>
+                <input type="hidden" name="description" id="description-hidden">
+            </div>
+
+            <!-- Current image + replace -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold" style="font-size:14px;">
+                    Featured Image
+                    <span class="text-muted fw-normal">(leave blank to keep current image)</span>
+                </label>
+
+                {% if blog[3] %}
+                <p style="font-size:13px; color:#666; margin-bottom:6px;">Current image:</p>
+                <img src="{{ url_for('static', filename=blog[3]) }}"
+                     class="current-img" alt="Current image">
+                <p style="font-size:12px; color:#e67e22; margin-bottom:10px;">
+                    <i class="fas fa-info-circle"></i>
+                    Upload a new image below to replace it. Leave empty to keep the above image.
+                </p>
+                {% endif %}
+
+                <div id="uploadArea"
+                     style="border:2px dashed #d0d8e4; border-radius:6px; padding:24px;
+                            text-align:center; cursor:pointer; background:#fafbfc;">
+                    <i class="fas fa-image fa-2x text-secondary mb-2"></i>
+                    <p class="mb-0 text-muted" style="font-size:13px;">
+                        Click to upload a replacement image (PNG, JPG, max 10MB)
+                    </p>
+                    <input type="file" id="imageFile" name="image" accept="image/*" style="display:none;">
+                </div>
+                <img id="preview" style="display:none; max-width:100%; max-height:220px;
+                                         border-radius:6px; margin-top:10px;" alt="">
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-primary-custom py-2" style="font-size:15px; flex:1;">
+                    Save Changes
+                </button>
+                <a href="{{ url_for('blog_detail', blog_id=blog[0]) }}"
+                   class="btn btn-outline-secondary py-2" style="font-size:14px;">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.js"></script>
+<script>
+const quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    modules: { toolbar: [[{header:[1,2,3,false]}],['bold','italic','underline'],
+                          ['blockquote'],['link'],['clean']] },
+    placeholder: 'Edit your blog content...'
+});
+
+// pre-fill existing content
+quill.root.innerHTML = {{ blog[2]|tojson }};
+
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    if (quill.getText().trim().length < 20) {
+        e.preventDefault();
+        alert('Content is too short. Please write more before saving.');
+        return;
+    }
+    document.getElementById('description-hidden').value = quill.root.innerHTML;
+});
+
+const area      = document.getElementById('uploadArea');
+const fileInput = document.getElementById('imageFile');
+const preview   = document.getElementById('preview');
+area.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', function() {
+    const f = this.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = e => {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        area.style.borderStyle = 'solid';
+        area.style.borderColor = '#1e3a5f';
+    };
+    r.readAsDataURL(f);
+});
+</script>
+{% endblock %}

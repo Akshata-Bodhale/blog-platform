@@ -1,0 +1,18 @@
+# Secret passwords - NEVER upload this
+.env
+
+# User uploaded images - too large for GitHub
+static/uploads/
+
+# Python junk files
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment folder
+venv/
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db

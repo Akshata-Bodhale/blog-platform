@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Register – BlogSphere{% endblock %}
+{% block extra_css %}
+<style>
+    .pwd-rules{list-style:none;padding:0;margin:6px 0 0;}
+    .pwd-rules li{font-size:12px;color:#aaa;display:flex;align-items:center;gap:6px;margin-bottom:3px;transition:color .2s;}
+    .pwd-rules li i{font-size:11px;width:14px;}
+    .pwd-rules li.ok{color:#16a34a;}
+    .pwd-rules li.fail{color:#dc2626;}
+    .pwd-strength-bar{height:5px;border-radius:3px;background:#e5e7eb;margin-top:8px;overflow:hidden;}
+    .pwd-strength-bar .fill{height:100%;border-radius:3px;transition:width .3s,background .3s;width:0%;}
+    .strength-label{font-size:11px;font-weight:600;margin-top:4px;}
+    .pwd-toggle{position:relative;}
+    .pwd-toggle .toggle-eye{position:absolute;right:11px;top:50%;transform:translateY(-50%);cursor:pointer;color:#888;font-size:14px;}
+    .pwd-toggle .toggle-eye:hover{color:#1e3a5f;}
+    .pwd-match-msg{font-size:12px;margin-top:4px;}
+    .terms-box{background:#f4f6f9;border:1.5px solid #d0d8e4;border-radius:6px;padding:14px 16px;font-size:13px;color:#555;line-height:1.6;margin-bottom:6px;}
+    .terms-box strong{color:#1e3a5f;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="form-box mt-4" style="max-width:520px;">
+        <h4 class="mb-1">Create Account</h4>
+        <p class="text-muted mb-4" style="font-size:13px;">Join BlogSphere — it's free!</p>
+
+        <form method="POST" id="regForm" novalidate>
+
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control" placeholder="Choose a username" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" placeholder="you@example.com" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <div class="pwd-toggle">
+                    <input type="password" name="password" id="password" class="form-control pe-5" placeholder="Create a password">
+                    <span class="toggle-eye" onclick="togglePwd('password',this)"><i class="fas fa-eye"></i></span>
+                </div>
+                <div class="pwd-strength-bar"><div class="fill" id="strengthBar"></div></div>
+                <div class="strength-label" id="strengthLabel"></div>
+                <ul class="pwd-rules" id="pwdRules">
+                    <li id="rule-len"    ><i class="fas fa-circle"></i> At least 8 characters</li>
+                    <li id="rule-upper"  ><i class="fas fa-circle"></i> One uppercase letter (A–Z)</li>
+                    <li id="rule-lower"  ><i class="fas fa-circle"></i> One lowercase letter (a–z)</li>
+                    <li id="rule-digit"  ><i class="fas fa-circle"></i> One number (0–9)</li>
+                    <li id="rule-special"><i class="fas fa-circle"></i> One special character (!@#$…)</li>
+                </ul>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Confirm Password</label>
+                <div class="pwd-toggle">
+                    <input type="password" name="confirm_password" id="confirm_password" class="form-control pe-5" placeholder="Re-enter password">
+                    <span class="toggle-eye" onclick="togglePwd('confirm_password',this)"><i class="fas fa-eye"></i></span>
+                </div>
+                <div class="pwd-match-msg" id="matchMsg"></div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">I want to join as</label>
+                <div class="d-flex gap-3 mt-1">
+                    <label style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:14px;color:#444;">
+                        <input type="radio" name="role" value="reader" checked> Reader
+                    </label>
+                    <label style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:14px;color:#444;">
+                        <input type="radio" name="role" value="author"> Author (can write blogs)
+                    </label>
+                </div>
+            </div>
+
+            <!-- ── Content Agreement ── -->
+            <div class="mb-4">
+                <div class="terms-box">
+                    <strong>Content Policy Agreement</strong><br>
+                    By registering, you agree that any content you post on BlogSphere:<br>
+                    • Is your own original work (no plagiarism)<br>
+                    • Does not contain inappropriate, offensive, or harmful material<br>
+                    • Does not violate anyone's copyright or privacy<br>
+                    • May be reviewed or removed by admins if it violates this policy<br>
+                    Violations may result in blog removal, account suspension, or permanent ban.
+                </div>
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="agree_terms" id="agreeTerms" required>
+                    <label class="form-check-label" for="agreeTerms" style="font-size:13px;font-weight:600;color:#1e3a5f;">
+                        I have read and agree to the Content Policy above
+                    </label>
+                </div>
+                <div id="termsMsg" style="font-size:12px;color:#dc2626;margin-top:4px;display:none;">
+                    You must agree to the Content Policy to register.
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary-custom w-100 py-2" id="submitBtn">Register</button>
+        </form>
+
+        <p class="text-center mt-3" style="font-size:13px;color:#888;">
+            Already have an account? <a href="{{ url_for('login') }}" style="color:#1e3a5f;font-weight:600;">Login here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function togglePwd(fieldId, icon) {
+    const f = document.getElementById(fieldId);
+    const i = icon.querySelector('i');
+    if (f.type === 'password') { f.type = 'text';     i.classList.replace('fa-eye','fa-eye-slash'); }
+    else                       { f.type = 'password'; i.classList.replace('fa-eye-slash','fa-eye'); }
+}
+
+const pwdInput     = document.getElementById('password');
+const confirmInput = document.getElementById('confirm_password');
+const bar          = document.getElementById('strengthBar');
+const label        = document.getElementById('strengthLabel');
+const matchMsg     = document.getElementById('matchMsg');
+
+const rules = {
+    'rule-len':     p => p.length >= 8,
+    'rule-upper':   p => /[A-Z]/.test(p),
+    'rule-lower':   p => /[a-z]/.test(p),
+    'rule-digit':   p => /[0-9]/.test(p),
+    'rule-special': p => /[!@#$%^&*()\-_=+\[\]{};:'",.<>/?\\|`~]/.test(p)
+};
+
+function checkRules(p) {
+    let passed = 0;
+    for (const [id, fn] of Object.entries(rules)) {
+        const li = document.getElementById(id);
+        const ok = fn(p);
+        li.classList.toggle('ok',   ok);
+        li.classList.toggle('fail', p.length > 0 && !ok);
+        const icon = li.querySelector('i');
+        if (ok)              icon.className = 'fas fa-check-circle';
+        else if (p.length>0) icon.className = 'fas fa-times-circle';
+        else                 icon.className = 'fas fa-circle';
+        if (ok) passed++;
+    }
+    return passed;
+}
+
+function updateStrength(p) {
+    const passed = checkRules(p);
+    if (!p) { bar.style.width='0%'; label.textContent=''; return false; }
+    bar.style.width = (passed/5*100) + '%';
+    if      (passed<=2) { bar.style.background='#dc2626'; label.textContent='Weak';     label.style.color='#dc2626'; }
+    else if (passed===3){ bar.style.background='#f59e0b'; label.textContent='Fair';     label.style.color='#f59e0b'; }
+    else if (passed===4){ bar.style.background='#3b82f6'; label.textContent='Good';     label.style.color='#3b82f6'; }
+    else                { bar.style.background='#16a34a'; label.textContent='Strong ✓'; label.style.color='#16a34a'; }
+    return passed === 5;
+}
+
+function checkMatch() {
+    const p = pwdInput.value, c = confirmInput.value;
+    if (!c) { matchMsg.textContent=''; return false; }
+    if (p===c) { matchMsg.textContent='✓ Passwords match';       matchMsg.style.color='#16a34a'; return true; }
+    else       { matchMsg.textContent='✗ Passwords do not match'; matchMsg.style.color='#dc2626'; return false; }
+}
+
+pwdInput.addEventListener('input',     () => { updateStrength(pwdInput.value); if (confirmInput.value) checkMatch(); });
+confirmInput.addEventListener('input', checkMatch);
+
+document.getElementById('regForm').addEventListener('submit', function(e) {
+    const allPassed = updateStrength(pwdInput.value);
+    const matched   = checkMatch();
+    const agreed    = document.getElementById('agreeTerms').checked;
+
+    if (!agreed) {
+        document.getElementById('termsMsg').style.display = 'block';
+        e.preventDefault();
+        document.getElementById('agreeTerms').scrollIntoView({behavior:'smooth', block:'center'});
+        return;
+    }
+    document.getElementById('termsMsg').style.display = 'none';
+
+    if (!allPassed || !matched) {
+        e.preventDefault();
+        if (!allPassed) document.getElementById('pwdRules').scrollIntoView({behavior:'smooth', block:'center'});
+    }
+});
+
+document.getElementById('agreeTerms').addEventListener('change', function() {
+    document.getElementById('termsMsg').style.display = this.checked ? 'none' : 'block';
+});
+</script>
+{% endblock %}

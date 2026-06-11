@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard – InkSpire{% endblock %}
+{% block extra_css %}
+<style>
+    .admin-layout{display:flex;min-height:calc(100vh - 180px);margin:-25px 0;}
+    .admin-sidebar{width:210px;flex-shrink:0;background:#1a2f4a;padding:20px 0;}
+    .admin-sidebar .sidebar-brand{color:#fff;font-weight:700;font-size:15px;padding:0 18px 16px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:8px;display:block;}
+    .admin-sidebar a.s-link{display:flex;align-items:center;gap:10px;padding:10px 18px;color:#9bb5cc;text-decoration:none;font-size:14px;border-left:3px solid transparent;}
+    .admin-sidebar a.s-link:hover,.admin-sidebar a.s-link.active{color:#fff;background:rgba(255,255,255,0.07);border-left-color:#e67e22;}
+    .admin-sidebar a.s-link i{width:16px;font-size:13px;}
+    .admin-sidebar .s-sep{border-top:1px solid rgba(255,255,255,0.08);margin:8px 0;}
+    .admin-main{flex:1;background:#f4f6f9;padding:28px 30px;overflow:auto;}
+    .admin-main h4{color:#1e3a5f;font-weight:700;margin-bottom:20px;}
+    .stat-card{background:#fff;border-radius:8px;padding:20px;box-shadow:0 2px 6px rgba(0,0,0,0.07);display:flex;align-items:center;gap:16px;}
+    .stat-icon{width:48px;height:48px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+    .stat-num{font-size:26px;font-weight:700;color:#1e3a5f;line-height:1;}
+    .stat-lbl{font-size:12px;color:#999;text-transform:uppercase;letter-spacing:0.4px;margin-top:3px;}
+    .panel{background:#fff;border-radius:8px;padding:18px;box-shadow:0 2px 6px rgba(0,0,0,0.07);}
+    .panel h6{font-weight:700;color:#1e3a5f;font-size:14px;border-bottom:2px solid #e67e22;padding-bottom:8px;margin-bottom:14px;}
+    .panel-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f2f2f2;font-size:13px;color:#555;}
+    .panel-row:last-child{border-bottom:none;}
+    .alert-card{border-radius:8px;padding:12px 16px;font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:10px;text-decoration:none;transition:opacity .2s;}
+    .alert-card:hover{opacity:.85;}
+    .alert-pending{background:#fef9c3;color:#854d0e;border:1px solid #fde68a;}
+    .alert-reports{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+    .notif-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f2f2f2;align-items:flex-start;}
+    .notif-item:last-child{border-bottom:none;}
+    .notif-dot{width:8px;height:8px;border-radius:50%;background:#e67e22;flex-shrink:0;margin-top:5px;}
+    .notif-dot.read{background:#d1d5db;}
+    .notif-text{font-size:13px;color:#444;line-height:1.5;}
+    .notif-time{font-size:11px;color:#aaa;margin-top:2px;}
+    .notif-type{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase;}
+    .type-new_blog{background:#dbeafe;color:#1d4ed8;}
+    .type-new_report{background:#fee2e2;color:#991b1b;}
+    .type-blog_edited{background:#d1fae5;color:#065f46;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="admin-layout">
+
+    <div class="admin-sidebar">
+        <span class="sidebar-brand">Admin Panel</span>
+        <a href="{{ url_for('admin_dashboard') }}"     class="s-link active"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="{{ url_for('admin_users') }}"         class="s-link"><i class="fas fa-users"></i> Users</a>
+        <a href="{{ url_for('admin_blogs') }}"         class="s-link">
+            <i class="fas fa-blog"></i> Blogs
+            {% if pending_blogs > 0 %}
+            <span class="badge bg-warning text-dark ms-auto" style="font-size:10px;">{{ pending_blogs }}</span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('admin_comments') }}"      class="s-link"><i class="fas fa-comments"></i> Comments</a>
+        <a href="{{ url_for('admin_reports_queue') }}" class="s-link">
+            <i class="fas fa-flag"></i> Reports
+            {% if pending_reports > 0 %}
+            <span class="badge bg-danger ms-auto" style="font-size:10px;">{{ pending_reports }}</span>
+            {% endif %}
+        </a>
+        <div class="s-sep"></div>
+        <a href="{{ url_for('index') }}" class="s-link"><i class="fas fa-arrow-left"></i> Back to Site</a>
+    </div>
+
+    <div class="admin-main">
+        <h4>Dashboard</h4>
+
+        <!-- Action alerts -->
+        {% if pending_blogs > 0 %}
+        <a href="{{ url_for('admin_blogs') }}" class="alert-card alert-pending">
+            <i class="fas fa-clock"></i>
+            {{ pending_blogs }} blog{{ 's' if pending_blogs>1 else '' }} waiting for your review
+            <span class="ms-auto">Review now →</span>
+        </a>
+        {% endif %}
+        {% if pending_reports > 0 %}
+        <a href="{{ url_for('admin_reports_queue') }}" class="alert-card alert-reports">
+            <i class="fas fa-flag"></i>
+            {{ pending_reports }} report{{ 's' if pending_reports>1 else '' }} need your attention
+            <span class="ms-auto">View reports →</span>
+        </a>
+        {% endif %}
+
+        <!-- Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#dbeafe;"><i class="fas fa-users" style="color:#2563eb;"></i></div>
+                    <div><div class="stat-num">{{ total_users }}</div><div class="stat-lbl">Total Users</div></div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fee2e2;"><i class="fas fa-blog" style="color:#dc2626;"></i></div>
+                    <div><div class="stat-num">{{ total_blogs }}</div><div class="stat-lbl">Live Blogs</div></div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#d1fae5;"><i class="fas fa-comments" style="color:#059669;"></i></div>
+                    <div><div class="stat-num">{{ total_comments }}</div><div class="stat-lbl">Comments</div></div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fef3c7;"><i class="fas fa-heart" style="color:#d97706;"></i></div>
+                    <div><div class="stat-num">{{ total_likes }}</div><div class="stat-lbl">Likes</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <!-- Recent blogs -->
+            <div class="col-lg-5">
+                <div class="panel">
+                    <h6>Recent Approved Blogs</h6>
+                    {% for b in recent_blogs %}
+                    <div class="panel-row">
+                        <div style="overflow:hidden;flex:1;margin-right:10px;">
+                            <a href="{{ url_for('blog_detail', blog_id=b[0]) }}"
+                               style="color:#1e3a5f;text-decoration:none;font-weight:600;font-size:13px;
+                                      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">
+                                {{ b[1][:45] }}{% if b[1]|length > 45 %}…{% endif %}
+                            </a>
+                            <span style="color:#aaa;font-size:12px;">by {{ b[3] }} · ❤ {{ b[4] }}</span>
+                        </div>
+                        <form method="POST" action="{{ url_for('delete_blog', blog_id=b[0]) }}"
+                              onsubmit="return confirm('Delete?')">
+                            <button class="btn btn-sm btn-outline-danger" style="font-size:12px;padding:3px 8px;">Del</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Notifications feed -->
+            <div class="col-lg-4">
+                <div class="panel">
+                    <h6>Recent Activity</h6>
+                    {% if notifications %}
+                    {% for n in notifications %}
+                    <div class="notif-item">
+                        <div class="notif-dot {% if n[4] %}read{% endif %}"></div>
+                        <div>
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+                                <span class="notif-type type-{{ n[1] }}">{{ n[1]|replace('_',' ') }}</span>
+                            </div>
+                            <div class="notif-text">
+                                {% if n[3] %}
+                                <a href="{{ n[3] }}" style="color:#444;text-decoration:none;">{{ n[2] }}</a>
+                                {% else %}
+                                {{ n[2] }}
+                                {% endif %}
+                            </div>
+                            <div class="notif-time">{{ n[5].strftime('%b %d, %Y %H:%M') }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p style="font-size:13px;color:#aaa;text-align:center;padding:20px 0;">No recent activity.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Category stats -->
+            <div class="col-lg-3">
+                <div class="panel">
+                    <h6>By Category</h6>
+                    {% set max_cnt = category_stats[0][1] if category_stats else 1 %}
+                    {% for cat, cnt in category_stats %}
+                    <div style="margin-bottom:10px;">
+                        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;">
+                            <span>{{ cat }}</span>
+                            <span style="font-weight:600;color:#1e3a5f;">{{ cnt }}</span>
+                        </div>
+                        <div style="background:#eef1f5;border-radius:4px;height:6px;overflow:hidden;">
+                            <div style="background:#e67e22;height:100%;border-radius:4px;width:{{ (cnt/max_cnt*100)|int }}%;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

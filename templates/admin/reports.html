@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Reports Queue – Admin{% endblock %}
+{% block extra_css %}
+<style>
+    .admin-layout{display:flex;min-height:calc(100vh - 180px);margin:-25px 0;}
+    .admin-sidebar{width:210px;flex-shrink:0;background:#1a2f4a;padding:20px 0;}
+    .admin-sidebar .sidebar-brand{color:#fff;font-weight:700;font-size:15px;padding:0 18px 16px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:8px;display:block;}
+    .admin-sidebar a.s-link{display:flex;align-items:center;gap:10px;padding:10px 18px;color:#9bb5cc;text-decoration:none;font-size:14px;border-left:3px solid transparent;}
+    .admin-sidebar a.s-link:hover,.admin-sidebar a.s-link.active{color:#fff;background:rgba(255,255,255,0.07);border-left-color:#e67e22;}
+    .admin-sidebar a.s-link i{width:16px;font-size:13px;}
+    .admin-sidebar .s-sep{border-top:1px solid rgba(255,255,255,0.08);margin:8px 0;}
+    .admin-main{flex:1;background:#f4f6f9;padding:28px 30px;overflow:auto;}
+    .admin-main h4{color:#1e3a5f;font-weight:700;margin-bottom:4px;}
+    .sub{color:#888;font-size:13px;margin-bottom:20px;}
+    .report-card{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.07);padding:18px 20px;margin-bottom:14px;border-left:4px solid #e67e22;display:flex;gap:16px;align-items:flex-start;}
+    .report-card.high{border-left-color:#dc2626;}
+    .report-card.medium{border-left-color:#f59e0b;}
+    .report-count{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:54px;background:#fff5f5;border-radius:8px;padding:8px;border:1.5px solid #fca5a5;}
+    .report-count .num{font-size:22px;font-weight:900;color:#dc2626;line-height:1;}
+    .report-count .lbl{font-size:10px;color:#dc2626;font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+    .report-info{flex:1;}
+    .report-info .title{font-size:15px;font-weight:700;color:#1e3a5f;text-decoration:none;display:block;margin-bottom:4px;}
+    .report-info .title:hover{color:#e67e22;}
+    .report-info .meta{font-size:12px;color:#888;margin-bottom:8px;}
+    .reason-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+    .reason-tag{background:#fef3c7;color:#92400e;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid #fde68a;}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .empty-state{text-align:center;padding:60px 20px;color:#aaa;}
+    .empty-state i{font-size:48px;margin-bottom:12px;display:block;}
+    .empty-state h5{color:#666;font-weight:600;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="admin-layout">
+
+    <div class="admin-sidebar">
+        <span class="sidebar-brand">Admin Panel</span>
+        <a href="{{ url_for('admin_dashboard') }}"     class="s-link"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="{{ url_for('admin_users') }}"         class="s-link"><i class="fas fa-users"></i> Users</a>
+        <a href="{{ url_for('admin_blogs') }}"         class="s-link"><i class="fas fa-blog"></i> Blogs</a>
+        <a href="{{ url_for('admin_comments') }}"      class="s-link"><i class="fas fa-comments"></i> Comments</a>
+        <a href="{{ url_for('admin_reports_queue') }}" class="s-link active">
+            <i class="fas fa-flag"></i> Reports
+            {% if reported_blogs|length > 0 %}
+            <span class="badge bg-danger ms-auto" style="font-size:10px;">{{ reported_blogs|length }}</span>
+            {% endif %}
+        </a>
+        <div class="s-sep"></div>
+        <a href="{{ url_for('index') }}" class="s-link"><i class="fas fa-arrow-left"></i> Back to Site</a>
+    </div>
+
+    <div class="admin-main">
+        <h4><i class="fas fa-flag me-2" style="color:#e67e22;"></i>Reports Queue</h4>
+        <p class="sub">Blogs reported by users — sorted by most reported first. Review each one and take action.</p>
+
+       {% if reported_blogs %}
+{% for rb in reported_blogs %}
+
+<div class="report-card {% if rb[5]|int >= 3 %}high{% elif rb[5]|int >= 2 %}medium{% endif %}">
+
+    <!-- Report count badge -->
+    <div class="report-count">
+        <span class="num">{{ rb[5] }}</span>
+        <span class="lbl">report{{ 's' if rb[5] > 1 else '' }}</span>
+    </div>
+
+    <!-- Blog Info -->
+    <div class="report-info">
+
+        <a href="{{ url_for('blog_detail', blog_id=rb[0]) }}" class="title">
+            {{ rb[1] }}
+        </a>
+
+        <div class="meta">
+            <i class="fas fa-user me-1"></i>by {{ rb[4] }}
+            &nbsp;·&nbsp;
+            <i class="fas fa-clock me-1"></i>
+            Latest: {{ rb[7].strftime('%b %d, %Y %H:%M') }}
+            &nbsp;·&nbsp;
+            Blog status:
+
+            {% if rb[2] == 'approved' %}
+                <span style="color:#16a34a;font-weight:600;">Live</span>
+            {% elif rb[2] == 'removed' %}
+                <span style="color:#6b7280;font-weight:600;">Already removed</span>
+            {% else %}
+                <span style="color:#92400e;font-weight:600;">
+                    {{ rb[2]|capitalize }}
+                </span>
+            {% endif %}
+        </div>
+
+        <!-- Reason Tags -->
+        <div class="reason-tags">
+            {% for reason in rb[6].split(' | ') %}
+            <span class="reason-tag">
+                <i class="fas fa-exclamation-triangle me-1"></i>{{ reason }}
+            </span>
+            {% endfor %}
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+
+            <a href="{{ url_for('blog_detail', blog_id=rb[0]) }}"
+               target="_blank"
+               class="btn btn-sm btn-outline-primary"
+               style="font-size:12px;">
+                <i class="fas fa-eye me-1"></i>View Blog
+            </a>
+
+            {% if rb[2] != 'removed' %}
+            <form method="POST"
+                  action="{{ url_for('admin_remove_blog', blog_id=rb[0]) }}"
+                  onsubmit="return confirm('Remove blog and revoke author trust?')">
+                <button class="btn btn-sm btn-danger" style="font-size:12px;">
+                    <i class="fas fa-ban me-1"></i>Remove Blog
+                </button>
+            </form>
+            {% endif %}
+
+            <form method="POST"
+                  action="{{ url_for('admin_dismiss_reports', blog_id=rb[0]) }}"
+                  onsubmit="return confirm('Dismiss all reports for this blog?')">
+                <button class="btn btn-sm btn-outline-secondary" style="font-size:12px;">
+                    <i class="fas fa-check me-1"></i>Dismiss Reports
+                </button>
+            </form>
+
+
+            <form method="POST"
+                  action="{{ url_for('admin_warn_blog', blog_id=rb[0]) }}"
+                  class="d-flex gap-1 align-items-center flex-wrap">
+                <input type="text" name="note" class="form-control form-control-sm"
+                       placeholder="e.g. Please update image — does not match content"
+                       style="font-size:12px;min-width:240px;" required>
+                <button class="btn btn-sm btn-outline-warning" style="font-size:12px;white-space:nowrap;">
+                    <i class="fas fa-bell me-1"></i>Warn Author
+                </button>
+            </form>
+            <form method="POST"
+                  action="{{ url_for('admin_suspend_user', user_id=rb[3]) }}"
+                  onsubmit="return confirm('Suspend author {{ rb[4] }}?')">
+                <button class="btn btn-sm btn-warning" style="font-size:12px;">
+                    <i class="fas fa-user-slash me-1"></i>Suspend Author
+                </button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{% endfor %}
+{% else %}
+
+<div class="empty-state">
+    <i class="fas fa-check-circle" style="color:#16a34a;"></i>
+    <h5>No pending reports</h5>
+    <p style="font-size:13px;">
+        All reports have been reviewed. Great work!
+    </p>
+</div>
+
+{% endif %}
+
+    </div>
+</div>
+{% endblock %}

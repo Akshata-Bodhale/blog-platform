@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}BlogSphere – Home{% endblock %}
+{% block content %}
+<div class="container">
+
+    <!-- Search bar -->
+    <div class="row mb-4">
+        <div class="col-md-6 mx-auto">
+            <form action="{{ url_for('index') }}" method="GET" class="d-flex gap-2">
+                <input type="text" name="search" class="form-control" placeholder="Search blogs..." value="{{ search_term or '' }}" style="font-size:14px;">
+                <button type="submit" class="btn-primary-custom" style="white-space:nowrap;">Search</button>
+            </form>
+        </div>
+
+        <div class="col-md-6 mx-auto">
+            <form action="{{ url_for('index') }}" method="GET" class="d-flex gap-2">
+            <input type="text" name="author" class="form-control" placeholder="Search by author..." value="{{ author_term or '' }}" style="font-size:14px;">
+            <button type="submit" class="btn-primary-custom" style="white-space:nowrap;">Search</button>
+        </form>
+        </div>
+    </div>
+
+    
+
+    <!-- Category filter pills
+    <div class="mb-4 d-flex flex-wrap gap-2">
+        <a href="{{ url_for('index') }}" class="badge {% if not current_category %}bg-dark{% else %}bg-secondary{% endif %} text-white text-decoration-none py-2 px-3" style="font-size:13px;">All</a>
+        {% for cat in categories %}
+        <a href="{{ url_for('index', category=cat) }}" class="badge {% if current_category == cat %}bg-dark{% else %}bg-secondary{% endif %} text-white text-decoration-none py-2 px-3" style="font-size:13px;">{{ cat }}</a>
+        {% endfor %}
+    </div> -->
+
+    <div class="row g-4">
+        <!-- Blog posts -->
+        <div class="col-lg-8">
+            <!-- {% if search_term or current_category %}
+            <p class="text-muted mb-3" style="font-size:14px;">
+                {% if search_term %}Results for "<strong>{{ search_term }}</strong>"{% else %}<strong>{{ current_category }}</strong>{% endif %}
+                — {{ blogs|length }} post(s) found
+                <a href="{{ url_for('index') }}" class="ms-2 text-danger" style="font-size:13px;">Clear</a>
+            </p>
+            {% endif %} -->
+
+            <div class="sec-title">{% if current_category %}{{ current_category }}{% elif search_term %}Search Results{% else %}Latest Posts{% endif %}</div>
+
+            {% if blogs %}
+            <div class="row g-4">
+                {% for blog in blogs %}
+                <div class="col-md-6">
+                    <div class="post-card">
+                        <img class="card-thumb"
+                             src="{{ url_for('static', filename=blog[3]) if blog[3] else 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600' }}"
+                             alt="{{ blog[1] }}">
+                        <div class="card-inner">
+                            <span class="cat-badge">{{ blog[4] }}</span>
+                            <div class="post-title">
+                                <a href="{{ url_for('blog_detail', blog_id=blog[0]) }}">{{ blog[1] }}</a>
+                            </div>
+                            <p class="post-excerpt">{{ blog[2]|striptags }}</p>
+                            <div class="card-footer-row">
+                                <a href="{{ url_for('author_profile', username=blog[7]) }}">
+                                    <i class="fas fa-user-circle me-1"></i>{{ blog[11] or blog[7] }}
+                                </a>
+                                <span>
+                                    <span class="likes-count"><i class="fas fa-heart me-1"></i>{{ blog[8] }}</span>
+                                    <span class="ms-2"><i class="fas fa-comment me-1"></i>{{ blog[9] }}</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5" style="background:#fff; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.07);">
+                <i class="fas fa-pen-to-square fa-3x text-secondary mb-3"></i>
+                <p class="text-muted">No blogs found. {% if session.username and session.role in ('author','admin') %}<a href="{{ url_for('create_blog') }}">Write the first one!</a>{% endif %}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            {% if most_liked %}
+            <div class="sidebar-widget">
+                <h6><i class="fas fa-fire text-warning me-2"></i>Most Liked</h6>
+                {% for b in most_liked[:5] %}
+                <div class="d-flex gap-2 mb-3">
+                    <img src="{{ url_for('static', filename=b[3]) if b[3] else 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=100' }}"
+                         style="width:55px; height:55px; object-fit:cover; border-radius:6px; flex-shrink:0;" alt="">
+                    <div>
+                        <a href="{{ url_for('blog_detail', blog_id=b[0]) }}" style="font-size:13px; font-weight:600; color:#1a2d45; text-decoration:none; line-height:1.4; display:block;">{{ b[1][:55] }}{% if b[1]|length > 55 %}…{% endif %}</a>
+                        <span style="font-size:12px; color:#e67e22;"><i class="fas fa-heart me-1"></i>{{ b[8] }} likes</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if featured_authors %}
+            <div class="sidebar-widget">
+                <h6><i class="fas fa-users me-2" style="color:#1e3a5f;"></i>Top Authors</h6>
+                {% for a in featured_authors %}
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    {% if a[4] %}
+                    <img src="{{ url_for('static', filename=a[4]) }}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="">
+                    {% else %}
+                    <div style="width:38px;height:38px;border-radius:50%;background:#1e3a5f;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;"><i class="fas fa-user"></i></div>
+                    {% endif %}
+                    <div>
+                        <a href="{{ url_for('author_profile', username=a[1]) }}" style="font-size:13px;font-weight:600;color:#1a2d45;text-decoration:none;">{{ a[2] or a[1] }}</a>
+                        <div style="font-size:11px;color:#999;">{{ a[5] }} posts &bull; {{ a[7] }} ❤</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- <div class="sidebar-widget">
+                <h6><i class="fas fa-folder me-2" style="color:#1e3a5f;"></i>Browse Topics</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for cat in categories %}
+                    <a href="{{ url_for('category_page', category_name=cat) }}" class="badge bg-secondary text-white text-decoration-none py-2 px-3" style="font-size:12px; font-weight:500;">{{ cat }}</a>
+                    {% endfor %}
+                </div>
+            </div> -->
+
+            {% if not session.username %}
+            <div class="sidebar-widget text-center" style="background:#1e3a5f; color:#c8d8ea;">
+                <i class="fas fa-feather-alt fa-2x mb-2" style="color:#e67e22;"></i>
+                <p style="font-size:13px; margin-bottom:10px;">Want to share your ideas?</p>
+                <a href="{{ url_for('register') }}" class="btn-orange" style="font-size:13px;">Create Free Account</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

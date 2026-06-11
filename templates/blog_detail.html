@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block title %}{{ blog[1] }} – InkSpire{% endblock %}
+{% block extra_css %}
+<style>
+    .blog-content{font-size:16px;line-height:1.85;color:#333;}
+    .blog-content p{margin-bottom:1.1rem;}
+    .blog-content h1,.blog-content h2,.blog-content h3{color:#1e3a5f;margin:1.4rem 0 .6rem;}
+    .blog-content img{max-width:100%;border-radius:6px;}
+    .comment-item{background:#f9fafb;border-left:3px solid #1e3a5f;border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:14px;}
+    .comment-item .comment-author{font-weight:700;font-size:14px;color:#1e3a5f;}
+    .comment-item .comment-date{font-size:12px;color:#aaa;}
+    .comment-item .comment-text{font-size:14px;color:#444;margin-top:6px;}
+    .trusted-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#1e3a5f,#2d5a9e);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.3px;}
+    .trusted-badge i{color:#f59e0b;font-size:11px;}
+    .status-banner{border-radius:7px;padding:10px 16px;font-size:13px;font-weight:600;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+    .status-pending {background:#fef9c3;color:#854d0e;border:1px solid #fde68a;}
+    .status-rejected{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+    .status-removed {background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;}
+    .report-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center;}
+    .report-modal-overlay.show{display:flex;}
+    .report-modal{background:#fff;border-radius:12px;padding:28px;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.18);}
+    .report-modal h5{color:#1e3a5f;font-weight:700;margin-bottom:6px;}
+    .report-option{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:7px;margin-bottom:8px;cursor:pointer;font-size:13px;transition:all .15s;}
+    .report-option:hover{border-color:#1e3a5f;background:#f0f4fb;}
+    .report-option input[type=radio]{accent-color:#1e3a5f;}
+    .report-option.selected{border-color:#1e3a5f;background:#eef3fb;font-weight:600;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div style="background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.07);padding:30px;">
+
+
+                <!-- Admin warning notice — visible only to author and admin -->
+                {% if blog_admin_note and (session.user_id == blog[5] or session.role == 'admin') %}
+                <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:7px;
+                            padding:12px 16px;margin-bottom:18px;font-size:13px;color:#856404;
+                            display:flex;align-items:flex-start;gap:10px;">
+                    <i class="fas fa-exclamation-triangle mt-1"></i>
+                    <div>
+                        <strong>Admin Notice:</strong> {{ blog_admin_note }}<br>
+                        <a href="{{ url_for('edit_blog', blog_id=blog[0]) }}"
+                           style="color:#856404;font-weight:700;font-size:12px;">
+                           ✏ Edit your blog to fix this issue →</a>
+                    </div>
+                </div>
+                {% endif %}
+                <!-- Status banner for author / admin only -->
+                {% if blog[13] == 'pending' %}
+                <div class="status-banner status-pending">
+                    <i class="fas fa-clock"></i> This blog is pending admin review and is not yet visible publicly.
+                </div>
+                {% elif blog[13] == 'rejected' %}
+                <div class="status-banner status-rejected">
+                    <i class="fas fa-times-circle"></i> This blog was rejected. Please edit and resubmit, or contact admin.
+                </div>
+                {% elif blog[13] == 'removed' %}
+                <div class="status-banner status-removed">
+                    <i class="fas fa-ban"></i> This blog has been removed by an admin.
+                </div>
+                {% endif %}
+
+                <!-- Category + action buttons -->
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <span class="post-card cat-badge" style="font-size:12px;padding:3px 12px;">{{ blog[4] }}</span>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <!-- Edit button: author or admin -->
+                        {% if session.user_id == blog[5] or session.role == 'admin' %}
+                        <a href="{{ url_for('edit_blog', blog_id=blog[0]) }}"
+                           class="btn btn-sm btn-outline-primary" style="font-size:13px;">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </a>
+                        {% endif %}
+                        <!-- Delete button -->
+                        {% if session.user_id == blog[5] or session.role == 'admin' %}
+                        <form method="POST" action="{{ url_for('delete_blog', blog_id=blog[0]) }}"
+                              onsubmit="return confirm('Delete this blog?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size:13px;">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </form>
+                        {% endif %}
+                        <!-- Report button: logged-in readers/authors who are not the author -->
+                        {% if session.user_id and session.user_id != blog[5] and blog[13] == 'approved' %}
+                        {% if user_reported %}
+                        <button class="btn btn-sm btn-secondary" disabled style="font-size:13px;">
+                            <i class="fas fa-flag me-1"></i>Reported
+                        </button>
+                        {% else %}
+                        <button class="btn btn-sm btn-outline-warning" style="font-size:13px;"
+                                onclick="document.getElementById('reportModal').classList.add('show')">
+                            <i class="fas fa-flag me-1"></i>Report
+                        </button>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Title -->
+                <h1 style="font-size:26px;font-weight:700;color:#1e3a5f;line-height:1.35;margin-bottom:14px;">
+                    {{ blog[1] }}
+                </h1>
+
+                <!-- Meta row -->
+                <div class="d-flex flex-wrap gap-3 mb-4 pb-3" style="border-bottom:1px solid #eee;font-size:13px;color:#888;">
+                    <a href="{{ url_for('author_profile', username=blog[7]) }}"
+                       style="color:#555;text-decoration:none;font-weight:600;display:flex;align-items:center;gap:6px;">
+                        {% if blog[9] %}
+                        <img src="{{ url_for('static', filename=blog[9]) }}"
+                             style="width:24px;height:24px;border-radius:50%;object-fit:cover;" alt="">
+                        {% else %}
+                        <i class="fas fa-user-circle" style="color:#1e3a5f;"></i>
+                        {% endif %}
+                        {{ blog[10] or blog[7] }}
+                        {% if blog[12] %}
+                        <span class="trusted-badge"><i class="fas fa-star"></i> Trusted Author</span>
+                        {% endif %}
+                    </a>
+                    <span><i class="fas fa-calendar me-1"></i>{{ blog[6].strftime('%B %d, %Y') }}</span>
+                    {% if blog[14] %}
+                    <span style="color:#aaa;font-size:12px;"><i class="fas fa-edit me-1"></i>Edited {{ blog[14].strftime('%b %d, %Y') }}</span>
+                    {% endif %}
+                    <span style="color:#e67e22;"><i class="fas fa-heart me-1"></i>{{ blog[8] }} likes</span>
+                </div>
+
+                <!-- Hero image -->
+                {% if blog[3] %}
+                <img src="{{ url_for('static', filename=blog[3]) }}" alt="{{ blog[1] }}"
+                     style="width:100%;max-height:420px;object-fit:cover;border-radius:6px;margin-bottom:24px;">
+                {% endif %}
+
+                <!-- Content -->
+                <div class="blog-content">{{ blog[2]|safe }}</div>
+
+                <!-- Like button -->
+                <div class="mt-4 pt-3" style="border-top:1px solid #eee;">
+                    {% if session.user_id %}
+                    <form method="POST" action="{{ url_for('like_blog', blog_id=blog[0]) }}" style="display:inline;">
+                        <button type="submit"
+                                class="{% if liked %}btn-orange{% else %}btn-primary-custom{% endif %}"
+                                style="font-size:14px;">
+                            <i class="fas fa-heart me-1"></i>
+                            {% if liked %}Liked ({{ blog[8] }}){% else %}Like ({{ blog[8] }}){% endif %}
+                        </button>
+                    </form>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="btn-primary-custom" style="font-size:14px;">
+                        <i class="fas fa-heart me-1"></i>Login to Like
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('category_page', category_name=blog[4]) }}"
+                       class="btn btn-sm btn-outline-secondary ms-2" style="font-size:13px;">
+                        More {{ blog[4] }}
+                    </a>
+                </div>
+
+                <!-- Author box -->
+                <div style="background:#f4f6f9;border-radius:8px;padding:18px;margin-top:24px;display:flex;gap:15px;align-items:flex-start;">
+                    {% if blog[9] %}
+                    <img src="{{ url_for('static', filename=blog[9]) }}"
+                         style="width:60px;height:60px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="">
+                    {% else %}
+                    <div style="width:60px;height:60px;border-radius:50%;background:#1e3a5f;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <p class="mb-1" style="font-size:12px;color:#999;">Written by</p>
+                        <a href="{{ url_for('author_profile', username=blog[7]) }}"
+                           style="font-weight:700;color:#1e3a5f;text-decoration:none;font-size:15px;display:inline-flex;align-items:center;gap:8px;">
+                            {{ blog[10] or blog[7] }}
+                            {% if blog[12] %}
+                            <span class="trusted-badge"><i class="fas fa-star"></i> Trusted Author</span>
+                            {% endif %}
+                        </a>
+                        {% if blog[11] %}
+                        <p style="font-size:13px;color:#666;margin-top:4px;margin-bottom:0;">
+                            {{ blog[11][:180] }}{% if blog[11]|length > 180 %}…{% endif %}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Comments -->
+                <div class="mt-4">
+                    <h5 style="font-weight:700;color:#1e3a5f;margin-bottom:16px;font-size:17px;">
+                        Comments ({{ comments|length }})
+                    </h5>
+                    {% if session.user_id %}
+                    <form method="POST" action="{{ url_for('add_comment', blog_id=blog[0]) }}" class="mb-4">
+                        <textarea name="content" class="form-control mb-2" rows="3"
+                                  placeholder="Write a comment..." required style="font-size:14px;"></textarea>
+                        <button type="submit" class="btn-primary-custom" style="font-size:13px;">Post Comment</button>
+                    </form>
+                    {% else %}
+                    <p style="font-size:14px;color:#888;margin-bottom:20px;">
+                        <a href="{{ url_for('login') }}" style="color:#1e3a5f;font-weight:600;">Login</a> to leave a comment.
+                    </p>
+                    {% endif %}
+
+                    {% for c in comments %}
+                    <div class="comment-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="comment-author">{{ c[4] }}</span>
+                                <span class="comment-date ms-2">{{ c[3].strftime('%b %d, %Y') }}</span>
+                            </div>
+                            {% if session.user_id == c[5] or session.role == 'admin' %}
+                            <form method="POST" action="{{ url_for('delete_comment', comment_id=c[0]) }}"
+                                  onsubmit="return confirm('Delete comment?')">
+                                <button type="submit" class="btn btn-sm btn-link text-danger p-0" style="font-size:12px;">Delete</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        <p class="comment-text mb-0">{{ c[2] }}</p>
+                    </div>
+                    {% else %}
+                    <p class="text-muted" style="font-size:14px;">No comments yet. Be the first!</p>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            {% if related %}
+            <div class="sidebar-widget">
+                <h6>Related Posts</h6>
+                {% for r in related %}
+                <div class="d-flex gap-2 mb-3">
+                    <img src="{{ url_for('static', filename=r[2]) if r[2] else 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=100' }}"
+                         style="width:55px;height:55px;object-fit:cover;border-radius:6px;flex-shrink:0;" alt="">
+                    <div>
+                        <a href="{{ url_for('blog_detail', blog_id=r[0]) }}"
+                           style="font-size:13px;font-weight:600;color:#1a2d45;text-decoration:none;line-height:1.4;display:block;">
+                            {{ r[1][:55] }}{% if r[1]|length > 55 %}…{% endif %}
+                        </a>
+                        <span style="font-size:11px;color:#e67e22;"><i class="fas fa-heart me-1"></i>{{ r[4] }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ── Report Modal ─────────────────────────────────────── -->
+<div class="report-modal-overlay" id="reportModal"
+     onclick="if(event.target===this) this.classList.remove('show')">
+    <div class="report-modal">
+        <h5><i class="fas fa-flag me-2" style="color:#e67e22;"></i>Report this Blog</h5>
+        <p style="font-size:13px;color:#888;margin-bottom:16px;">
+            Select a reason below. Our admin team will review it within 24 hours.
+        </p>
+        <form method="POST" action="{{ url_for('report_blog', blog_id=blog[0]) }}" id="reportForm">
+            {% for reason in report_reasons %}
+            <label class="report-option" onclick="selectOption(this)">
+                <input type="radio" name="reason" value="{{ reason }}" required>
+                {{ reason }}
+            </label>
+            {% endfor %}
+            <div class="d-flex gap-2 mt-3">
+                <button type="submit" class="btn-orange" style="flex:1;font-size:14px;padding:10px;">
+                    Submit Report
+                </button>
+                <button type="button" class="btn btn-outline-secondary" style="flex:1;font-size:14px;"
+                        onclick="document.getElementById('reportModal').classList.remove('show')">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function selectOption(el) {
+    document.querySelectorAll('.report-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+}
+</script>
+{% endblock %}

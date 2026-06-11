@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% block title %}BlogSphere – Where Every Story Matters{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero */
+    .hero-section {
+        background: #1e3a5f;
+        color: #fff;
+        padding: 80px 0 70px;
+        text-align: center;
+    }
+    .hero-section h1 {
+        font-size: 46px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin-bottom: 18px;
+    }
+    .hero-section h1 span {
+        color: #e67e22;
+    }
+    .hero-section p {
+        font-size: 18px;
+        color: #c8d8ea;
+        max-width: 560px;
+        margin: 0 auto 32px;
+        line-height: 1.7;
+    }
+    .hero-btns a {
+        margin: 6px;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .hero-btns .btn-start {
+        background: #e67e22;
+        color: #fff;
+    }
+    .hero-btns .btn-start:hover { background: #d0691a; color: #fff; }
+    .hero-btns .btn-browse {
+        background: rgba(255,255,255,0.12);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    .hero-btns .btn-browse:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+    /* Stats bar */
+    .stats-bar {
+        background: #fff;
+        border-bottom: 1px solid #e8edf3;
+        padding: 22px 0;
+    }
+    .stat-item {
+        text-align: center;
+        padding: 0 20px;
+    }
+    .stat-item .stat-number {
+        font-size: 28px;
+        font-weight: 800;
+        color: #1e3a5f;
+        display: block;
+    }
+    .stat-item .stat-label {
+        font-size: 12px;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Features */
+    .features-section {
+        padding: 60px 0 50px;
+    }
+    .feature-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 30px 24px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        height: 100%;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.11);
+    }
+    .feature-card .icon-circle {
+        width: 62px;
+        height: 62px;
+        border-radius: 50%;
+        background: #eef3fb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 18px;
+        font-size: 26px;
+    }
+    .feature-card h5 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e3a5f;
+        margin-bottom: 10px;
+    }
+    .feature-card p {
+        font-size: 13px;
+        color: #777;
+        line-height: 1.65;
+        margin: 0;
+    }
+
+    /* Categories strip */
+    .categories-strip {
+        background: #fff;
+        padding: 40px 0;
+        border-top: 1px solid #e8edf3;
+        border-bottom: 1px solid #e8edf3;
+    }
+    .cat-pill {
+        display: inline-block;
+        background: #eef3fb;
+        color: #1e3a5f;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 9px 22px;
+        border-radius: 25px;
+        text-decoration: none;
+        margin: 5px;
+        transition: background 0.18s, color 0.18s;
+    }
+    .cat-pill:hover {
+        background: #1e3a5f;
+        color: #fff;
+    }
+    .cat-pill .cat-emoji {
+        margin-right: 5px;
+    }
+
+    /* Latest blogs preview */
+    .latest-section {
+        padding: 55px 0 40px;
+    }
+
+    /* CTA */
+    .cta-section {
+        background: #1e3a5f;
+        color: #fff;
+        padding: 60px 0;
+        text-align: center;
+    }
+    .cta-section h2 {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 14px;
+    }
+    .cta-section p {
+        font-size: 16px;
+        color: #c8d8ea;
+        margin-bottom: 28px;
+    }
+    .cta-section a {
+        margin: 5px;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .cta-orange { background: #e67e22; color: #fff; }
+    .cta-orange:hover { background: #d0691a; color: #fff; }
+    .cta-outline {
+        border: 1.5px solid rgba(255,255,255,0.35);
+        color: #fff;
+        background: transparent;
+    }
+    .cta-outline:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* How it works */
+    .steps-section {
+        padding: 55px 0 45px;
+        background: #fff;
+    }
+    .step-box {
+        text-align: center;
+        padding: 10px 20px;
+    }
+    .step-num {
+        width: 48px;
+        height: 48px;
+        background: #e67e22;
+        color: #fff;
+        font-size: 20px;
+        font-weight: 800;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 14px;
+    }
+    .step-box h6 {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1e3a5f;
+        margin-bottom: 7px;
+    }
+    .step-box p {
+        font-size: 13px;
+        color: #777;
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ─── Hero ─────────────────────────────────────────── -->
+<section class="hero-section">
+    <div class="container">
+        <h1>Your Stories Deserve <span>to be Heard</span></h1>
+        <p>BlogSphere is a community where writers share ideas and readers discover stories across Travel, Technology, Food, Education and Lifestyle.Thousands of writers and readers are already sharing stories. Come be part of it.</p>
+        <div class="hero-btns">
+            {% if session.username %}
+                <a href="{{ url_for('create_blog') }}" class="btn-start">+ Write a Blog</a>
+                <a href="{{ url_for('index') }}" class="btn-browse">Browse Posts</a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn-start">Get Started Free</a>
+                <!-- <a href="{{ url_for('index') }}" class="btn-browse">Browse Posts</a> -->
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- ─── Stats Bar ─────────────────────────────────────── -->
+<section class="stats-bar">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_blogs }}</span>
+                    <span class="stat-label">Blog Posts</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_authors }}</span>
+                    <span class="stat-label">Authors</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_comments }}</span>
+                    <span class="stat-label">Comments</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">5</span>
+                    <span class="stat-label">Categories</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+<!-- ─── Features ──────────────────────────────────────── -->
+<section class="features-section" style="background:#f4f6f9;">
+    <div class="container">
+        <h4 class="sec-title text-center" style="border-left:none; padding-left:0; margin-bottom:35px;">Why BlogSphere?</h4>
+        <div class="row g-4">
+            <div class="col-sm-6 col-lg-3">
+                <div class="feature-card">
+                    <div class="icon-circle">✍️</div>
+                    <h5>Easy Publishing</h5>
+                    <p>Write and publish your blog with our simple rich-text editor. Add images, format text and go live in minutes.</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="feature-card">
+                    <div class="icon-circle">💬</div>
+                    <h5>Engage Readers</h5>
+                    <p>Readers can like and comment on your posts. Build a loyal audience that comes back for more.</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="feature-card">
+                    <div class="icon-circle">🗂️</div>
+                    <h5>Organised Categories</h5>
+                    <p>Every blog belongs to a category making it easy for the right readers to find your content.</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="feature-card">
+                    <div class="icon-circle">👤</div>
+                    <h5>Author Profiles</h5>
+                    <p>Create a profile with your bio and photo. Let readers know who you are and follow your work.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ─── How It Works ──────────────────────────────────── -->
+<section class="steps-section">
+    <div class="container">
+        <h4 class="sec-title text-center" style="border-left:none; padding-left:0; margin-bottom:35px;">How It Works</h4>
+        <div class="row g-4">
+            <div class="col-6 col-md-3">
+                <div class="step-box">
+                    <div class="step-num">1</div>
+                    <h6>Register</h6>
+                    <p>Create a free account as a Reader or Author in under a minute.</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="step-box">
+                    <div class="step-num">2</div>
+                    <h6>Set Up Profile</h6>
+                    <p>Authors add a bio and photo to introduce themselves to the community.</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="step-box">
+                    <div class="step-num">3</div>
+                    <h6>Write & Publish</h6>
+                    <p>Craft your blog post, choose a category, add an image and hit publish.</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="step-box">
+                    <div class="step-num">4</div>
+                    <h6>Connect</h6>
+                    <p>Get likes and comments from readers around the world.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ─── CTA ───────────────────────────────────────────── -->
+<!-- <section class="cta-section">
+    <div class="container">
+        {% if session.username %}
+            <h2>Ready to Write Something Great?</h2>
+            <p>Your next story is just a click away. The BlogSphere community is waiting.</p>
+            <a href="{{ url_for('create_blog') }}" class="cta-orange">+ Write a Blog</a>
+            <a href="{{ url_for('index') }}" class="cta-outline">Browse Posts</a>
+        {% else %}
+            <h2>Join BlogSphere Today — It's Free</h2>
+            <p>Thousands of writers and readers are already sharing stories. Come be part of it.</p>
+            <a href="{{ url_for('register') }}" class="cta-orange">Create Account</a>
+            <a href="{{ url_for('login') }}" class="cta-outline">Login</a>
+        {% endif %}
+    </div>
+</section> -->
+
+{% endblock %}

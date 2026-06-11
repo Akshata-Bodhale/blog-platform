@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ profile[2] if profile else author[1] }} – InkSpire{% endblock %}
+{% block content %}
+<div class="container">
+    <!-- Profile header -->
+    <div style="background:#1e3a5f; border-radius:8px; padding:28px; color:#fff; margin-bottom:24px;">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+            {% if profile and profile[4] %}
+            <img src="{{ url_for('static', filename=profile[4]) }}" style="width:85px;height:85px;border-radius:50%;object-fit:cover;border:3px solid #e67e22;" alt="">
+            {% else %}
+            <div style="width:85px;height:85px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:32px;border:3px solid #e67e22;"><i class="fas fa-user"></i></div>
+            {% endif %}
+            <div style="flex:1;">
+                <h4 style="margin:0 0 4px; font-size:22px;">{{ profile[2] if profile else author[1] }}</h4>
+                <p style="color:#a0b8d0; font-size:13px; margin:0 0 8px;">@{{ author[1] }} &bull; {{ author[3]|title }}</p>
+                {% if profile and profile[3] %}<p style="color:#c8d8ea; font-size:14px; margin:0;">{{ profile[3] }}</p>{% endif %}
+            </div>
+            <div class="d-flex gap-3 text-center">
+                <div style="background:rgba(255,255,255,0.1);padding:12px 18px;border-radius:8px;">
+                    <div style="font-size:22px;font-weight:700;">{{ blogs|length }}</div>
+                    <div style="font-size:12px;color:#a0b8d0;">Blogs</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.1);padding:12px 18px;border-radius:8px;">
+                    <div style="font-size:22px;font-weight:700;color:#e67e22;">{{ blogs|map(attribute=6)|map('int')|sum }}</div>
+                    <div style="font-size:12px;color:#a0b8d0;">Likes</div>
+                </div>
+            </div>
+        </div>
+        {% if session.username == author[1] %}
+        <div class="mt-3">
+            <a href="{{ url_for('edit_profile') }}" class="btn btn-sm btn-outline-light" style="font-size:13px;">Edit Profile</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Blogs -->
+    <div class="sec-title">Posts by {{ profile[2] if profile else author[1] }}</div>
+
+    {% if blogs %}
+    <div class="row g-4">
+        {% for blog in blogs %}
+        <div class="col-md-6 col-lg-4">
+            <div class="post-card">
+                <img class="card-thumb"
+                     src="{{ url_for('static', filename=blog[3]) if blog[3] else 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600' }}"
+                     alt="{{ blog[1] }}">
+                <div class="card-inner">
+                    <span class="cat-badge">{{ blog[4] }}</span>
+                    <div class="post-title"><a href="{{ url_for('blog_detail', blog_id=blog[0]) }}">{{ blog[1] }}</a></div>
+                    <p class="post-excerpt">{{ blog[2]|striptags }}</p>
+                    <div class="card-footer-row">
+                        <span style="font-size:12px; color:#999;">{{ blog[5].strftime('%b %d, %Y') }}</span>
+                        <span><span class="likes-count"><i class="fas fa-heart me-1"></i>{{ blog[6] }}</span><span class="ms-2"><i class="fas fa-comment me-1"></i>{{ blog[7] }}</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5" style="background:#fff;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.07);">
+        <i class="fas fa-pen fa-3x text-secondary mb-3"></i>
+        <p class="text-muted">No blogs published yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

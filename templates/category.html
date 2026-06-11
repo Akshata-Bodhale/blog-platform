@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ category_name }} – InkSpire{% endblock %}
+{% block content %}
+<div class="container">
+    <!-- Category header -->
+    <div style="background:#1e3a5f; border-radius:8px; padding:24px 28px; color:#fff; margin-bottom:24px;">
+        <div class="d-flex align-items-center gap-3 mb-2">
+            <span style="font-size:28px;">{% if category_name=='Travel' %}✈️{% elif category_name=='Food' %}🍜{% elif category_name=='Technology' %}💻{% elif category_name=='Education' %}📚{% else %}🌿{% endif %}</span>
+            <div>
+                <h3 style="margin:0;font-weight:700;">{{ category_name }}</h3>
+                <p style="margin:0;color:#a0b8d0;font-size:13px;">{{ blogs|length }} post(s) in this category</p>
+            </div>
+        </div>
+        
+    </div>
+
+    {% if blogs %}
+    <div class="row g-4">
+        {% for blog in blogs %}
+        <div class="col-md-6 col-lg-4">
+            <div class="post-card">
+                <img class="card-thumb"
+                     src="{{ url_for('static', filename=blog[3]) if blog[3] else 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600' }}"
+                     alt="{{ blog[1] }}">
+                <div class="card-inner">
+                    <span class="cat-badge">{{ blog[4] }}</span>
+                    <div class="post-title"><a href="{{ url_for('blog_detail', blog_id=blog[0]) }}">{{ blog[1] }}</a></div>
+                    <p class="post-excerpt">{{ blog[2]|striptags }}</p>
+                    <div class="card-footer-row">
+                        <a href="{{ url_for('author_profile', username=blog[6]) }}"><i class="fas fa-user-circle me-1"></i>{{ blog[6] }}</a>
+                        <span><span class="likes-count"><i class="fas fa-heart me-1"></i>{{ blog[7] }}</span><span class="ms-2"><i class="fas fa-comment me-1"></i>{{ blog[8] }}</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5" style="background:#fff;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.07);">
+        <i class="fas fa-inbox fa-3x text-secondary mb-3"></i>
+        <p class="text-muted">No blogs in {{ category_name }} yet.</p>
+        <a href="{{ url_for('index') }}" class="btn-primary-custom mt-2" style="font-size:13px;">Back to Home</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,480 @@
+{% extends "base.html" %}
+{% block title %}Help & FAQ – BlogSphere{% endblock %}
+
+{% block extra_css %}
+<style>
+  .faq-page { max-width: 1100px; margin: 0 auto; padding: 0 10px; }
+  .faq-header { text-align:center; margin-bottom:20px; }
+  .faq-header h2 { font-size:22px; font-weight:700; color:#1e3a5f; margin-bottom:4px; }
+  .faq-header p  { font-size:13px; color:#999; }
+
+  .cat-pills { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:18px; }
+  .cat-pill {
+    display:flex; align-items:center; gap:5px;
+    padding:6px 16px; border-radius:999px;
+    border:1.5px solid #d0d8e4; background:#fff; color:#555;
+    font-size:12.5px; font-weight:500; cursor:pointer; transition:all .16s; user-select:none;
+  }
+  .cat-pill:hover  { border-color:#1e3a5f; color:#1e3a5f; }
+  .cat-pill.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+
+  .faq-body {
+    display:grid;
+    grid-template-columns: 360px minmax(0,1fr);
+    gap:14px; align-items:start;
+  }
+
+  /* LEFT panel */
+  .left-panel { background:#fff; border:1px solid #e4e9f0; border-radius:14px; overflow:hidden; }
+  .lp-header {
+    padding:11px 15px; border-bottom:1px solid #e4e9f0;
+    display:flex; align-items:center; gap:10px;
+  }
+  .bot-av-sm {
+    width:33px; height:33px; border-radius:8px;
+    background:#eef3fb; display:flex; align-items:center;
+    justify-content:center; font-size:17px; flex-shrink:0;
+  }
+  .bot-name   { font-size:13px; font-weight:700; color:#1e3a5f; }
+  .bot-hint   { font-size:11px; color:#aaa; }
+  .online-dot { width:8px; height:8px; border-radius:50%; background:#27ae60; margin-left:auto; flex-shrink:0; }
+
+  .q-sections-wrap { padding:8px 10px 10px; max-height:620px; overflow-y:auto; }
+  .q-sections-wrap::-webkit-scrollbar { width:3px; }
+  .q-sections-wrap::-webkit-scrollbar-thumb { background:#e0e8f0; border-radius:3px; }
+
+  .q-section { display:none; }
+  .q-section.active { display:block; }
+  .q-sec-label {
+    font-size:10px; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:#c0c8d8;
+    padding:8px 4px 5px; margin-top:2px;
+  }
+  .q-list { display:flex; flex-direction:column; gap:3px; margin-bottom:6px; }
+
+  .q-pill {
+    text-align:left; background:#f8f9fb;
+    border:1px solid #eaeff6; border-radius:8px;
+    padding:8px 12px 8px 30px; font-size:12.5px; color:#555;
+    cursor:pointer; transition:all .13s; position:relative; line-height:1.4;
+  }
+  .q-pill::before {
+    content:''; position:absolute; left:11px; top:50%; transform:translateY(-50%);
+    width:7px; height:7px; border-radius:50%; border:1.5px solid #c8d0dc;
+    transition:all .13s;
+  }
+  .q-pill:hover  { border-color:#1e3a5f; color:#1e3a5f; background:#f0f4fc; }
+  .q-pill.active-q { background:#eef3fb; border-color:#1e3a5f; color:#1e3a5f; font-weight:600; }
+  .q-pill.active-q::before { background:#1e3a5f; border-color:#1e3a5f; }
+  .q-pill.seen::before { background:#27ae60; border-color:#27ae60; }
+
+  /* RIGHT panel */
+  .right-panel {
+    background:#fff; border:1px solid #e4e9f0; border-radius:14px;
+    overflow:hidden; min-height:500px; display:flex; flex-direction:column;
+    position:sticky; top:80px;
+  }
+  .rp-header {
+    padding:11px 16px; border-bottom:1px solid #e4e9f0;
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:11.5px; color:#aaa; font-weight:600;
+    letter-spacing:.05em; text-transform:uppercase;
+  }
+  .rp-header-left { display:flex; align-items:center; gap:6px; }
+
+  .answer-body { flex:1; padding:20px 22px 14px; overflow-y:auto; }
+  .answer-body::-webkit-scrollbar { width:3px; }
+  .answer-body::-webkit-scrollbar-thumb { background:#e0e8f0; border-radius:3px; }
+
+  /* Placeholder */
+  .ans-ph {
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    height:380px; color:#ccc; text-align:center; gap:10px;
+  }
+  .ans-ph-icon { font-size:38px; }
+  .ans-ph p { font-size:13px; line-height:1.6; max-width:240px; }
+
+  /* Answer */
+  .ans-badge {
+    display:inline-flex; align-items:center; gap:4px;
+    font-size:11px; font-weight:600; padding:3px 10px;
+    border-radius:20px; margin-bottom:11px;
+  }
+  .b-account  { background:#eef3fb; color:#1e3a5f; }
+  .b-writing  { background:#fff4e6; color:#b7600a; }
+  .b-reading  { background:#eafaf1; color:#1a7a45; }
+  .b-technical{ background:#f3effe; color:#5b35a8; }
+
+  .ans-q {
+    font-size:16px; font-weight:700; color:#1e3a5f;
+    margin-bottom:14px; line-height:1.4;
+    padding-bottom:12px; border-bottom:2px solid #f0f4f8;
+  }
+  .ans-text { font-size:13.5px; line-height:1.8; color:#444; }
+  .ans-text strong { color:#1e3a5f; font-weight:600; }
+  .ans-text em     { color:#888; font-style:italic; }
+  .ans-text ul     { padding-left:18px; margin:8px 0; }
+  .ans-text li     { margin:5px 0; }
+  .ans-text code   {
+    background:#f0f4f8; color:#c0392b;
+    padding:1px 6px; border-radius:4px;
+    font-size:12.5px; font-family:monospace;
+  }
+
+  /* Footer nav */
+  .rp-footer {
+    padding:10px 16px; border-top:1px solid #f0f4f8;
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:11.5px; color:#c0c8d8;
+  }
+  .nav-btns { display:flex; gap:6px; }
+  .nav-btn {
+    background:none; border:1px solid #e0e8f0; border-radius:7px;
+    padding:4px 12px; font-size:12px; color:#666; cursor:pointer; transition:all .13s;
+  }
+  .nav-btn:hover { border-color:#1e3a5f; color:#1e3a5f; }
+  .nav-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+  /* Typing */
+  .typing-row { display:flex; align-items:center; gap:5px; padding:8px 0; }
+  .td { width:7px; height:7px; border-radius:50%; background:#c0c8d8; animation:tdot 1.2s infinite; }
+  .td:nth-child(2){ animation-delay:.2s; }
+  .td:nth-child(3){ animation-delay:.4s; }
+  @keyframes tdot{ 0%,80%,100%{opacity:.3;transform:scale(1)} 40%{opacity:1;transform:scale(1.3)} }
+
+  @keyframes fadeIn{ from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+  .fade-in{ animation:fadeIn .22s ease both; }
+
+  @media(max-width:680px){
+    .faq-body{ grid-template-columns:1fr; }
+    .right-panel{ min-height:320px; position:static; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+<div class="faq-page">
+
+  <div class="faq-header">
+    <h2>🔥 BlogSphere Help Centre</h2>
+   
+  </div>
+
+  <div class="cat-pills">
+    <div class="cat-pill active" onclick="filterCat(this,'all')">📋 All</div>
+    <div class="cat-pill" onclick="filterCat(this,'account')">👤 Account</div>
+    <div class="cat-pill" onclick="filterCat(this,'writing')">✏️ Writing</div>
+    <div class="cat-pill" onclick="filterCat(this,'reading')">📖 Reading</div>
+    <div class="cat-pill" onclick="filterCat(this,'technical')">⚙️ Technical</div>
+    <div class="cat-pill" onclick="filterCat(this,'terms')">📋 Terms</div>
+  </div>
+
+  <div class="faq-body">
+
+    <!-- LEFT: questions -->
+    <div class="left-panel">
+      <div class="lp-header">
+        <div class="bot-av-sm">🔥</div>
+        <div>
+          <div class="bot-name">BlogSphere Bot</div>
+          <div class="bot-hint">Select a question →</div>
+        </div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="q-sections-wrap">
+        <div class="q-section active" data-section="account">
+          <div class="q-sec-label">👤 Account</div>
+          <div class="q-list" id="ql-account"></div>
+        </div>
+        <div class="q-section active" data-section="writing">
+          <div class="q-sec-label">✏️ Writing</div>
+          <div class="q-list" id="ql-writing"></div>
+        </div>
+        <div class="q-section active" data-section="reading">
+          <div class="q-sec-label">📖 Reading</div>
+          <div class="q-list" id="ql-reading"></div>
+        </div>
+        <div class="q-section active" data-section="technical">
+          <div class="q-sec-label">⚙️ Technical</div>
+          <div class="q-list" id="ql-technical"></div>
+        </div>
+        <div class="q-section active" data-section="terms">
+          <div class="q-sec-label">📋 Terms & Policy</div>
+          <div class="q-list" id="ql-terms"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: answer -->
+    <div class="right-panel" id="rightPanel">
+      <div class="rp-header">
+        <div class="rp-header-left">
+          <span>💬</span> Answer
+        </div>
+        <span id="qCounter" style="font-size:11px;color:#bbb;font-weight:400;text-transform:none;letter-spacing:0;"></span>
+      </div>
+      <div class="answer-body" id="answerBody">
+        <div class="ans-ph" id="ansPlaceholder">
+          <div class="ans-ph-icon">👈</div>
+          <p>Click any question on the left and get response here instantly.</p>
+        </div>
+      </div>
+      <div class="rp-footer" id="rpFooter" style="display:none;">
+        <span id="ansTime"></span>
+        <div class="nav-btns">
+          <button class="nav-btn" id="prevBtn" onclick="navigate(-1)" disabled>← Prev</button>
+          <button class="nav-btn" id="nextBtn" onclick="navigate(1)">Next →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const FAQS = [
+  { cat:"account",
+    q:"How do I register on BlogSphere?",
+    a:"Registering is quick and free.<br><br><strong>Steps:</strong><ul><li>Click the <strong>Register</strong> button in the top navigation bar.</li><li>Enter a unique <strong>username</strong>, your <strong>email address</strong>, and a <strong>password</strong>.</li><li>Choose your role — <strong>Reader</strong> (browse and comment) or <strong>Author</strong> (write and publish blogs).</li><li>Click <strong>Register</strong> — you will be redirected to the login page.</li></ul><em>Note:</em> Your username and email must be unique. You cannot register with an email that is already in use." },
+
+  { cat:"account",
+    q:"Reader vs Author account — what's the difference?",
+    a:"BlogSphere has two main user roles:<br><br><ul><li><strong>Reader</strong> — can browse all blogs, read posts, like blogs, and leave comments. Cannot write or publish blog posts.</li><li><strong>Author</strong> — has all Reader permissions, plus the ability to write and publish blog posts and set up a public author profile with a bio and photo.</li></ul><em>Tip:</em> If you registered as a Reader but want to write, contact the admin to upgrade your role, or register a new Author account." },
+
+  { cat:"account",
+    q:"How do I create my author profile?",
+    a:"An author profile is your public page that readers see when they click your name.<br><br><strong>Steps to create it:</strong><ul><li>Log in with your Author account.</li><li>Click your username in the top navigation bar and select <strong>Profile</strong>.</li><li>If no profile exists yet, you will be taken to the Create Profile page.</li><li>Enter your <strong>Full Name</strong>, a short <strong>Bio</strong> about yourself, and optionally upload a <strong>Profile Photo</strong>.</li><li>Click Save — your public author page is now live.</li></ul><em>Important:</em> You must create a profile before you can publish any blog posts on BlogSphere." },
+
+  { cat:"account",
+    q:"How do I edit my profile?",
+    a:"You can update your profile at any time.<br><br><strong>Steps:</strong><ul><li>Log in and click your username in the navbar.</li><li>Select <strong>Profile</strong> from the dropdown.</li><li>On your profile page, click the <strong>Edit Profile</strong> button (only visible to you).</li><li>Update your Full Name, Bio, or upload a new profile photo.</li><li>If you do not upload a new photo, your existing one is kept automatically.</li><li>Click Save to apply the changes.</li></ul>" },
+
+  { cat:"account",
+    q:"How do I log out of BlogSphere?",
+    a:"To log out:<br><br><ul><li>Click your <strong>username</strong> in the top navigation bar.</li><li>Select <strong>Logout</strong> from the dropdown menu.</li></ul>You will be immediately logged out and redirected to the homepage. Your session is fully cleared — no one else can access your account on that device after logging out.<br><br><em>Tip:</em> Always log out when using a shared or public computer." },
+
+  { cat:"account",
+    q:"Can I change my username or email after registering?",
+    a:"Currently, BlogSphere does not have a self-service option to change your username or email from the user interface.<br><br><strong>What you can change:</strong><ul><li>Your <strong>Full Name</strong> and <strong>Bio</strong> on your Author Profile page</li><li>Your <strong>Profile Photo</strong></li></ul><strong>To change username or email:</strong> Contact the site administrator who can update these directly in the database. Alternatively, you can register a new account with your preferred username or email." },
+
+  { cat:"writing",
+    q:"How do I write and publish a blog post?",
+    a:"Publishing a blog on BlogSphere is straightforward.<br><br><strong>Requirements first:</strong><ul><li>You must have an <strong>Author</strong> account.</li><li>You must have created an <strong>Author Profile</strong> before publishing.</li></ul><strong>Steps to publish:</strong><ul><li>Click the <strong>+ Write</strong> button in the navigation bar.</li><li>Enter a <strong>Title</strong> for your post.</li><li>Select a <strong>Category</strong> (Travel, Food, Technology, Education, or Lifestyle).</li><li>Write your content using the <strong>Quill rich text editor</strong> — you can format text, add headings, bold, italics, bullet points, and links.</li><li>Optionally upload a <strong>Featured Image</strong> (max 10MB, formats: jpg, png, gif, webp).</li><li>Click <strong>Publish</strong> — your post goes live immediately on the homepage.</li></ul>" },
+
+  { cat:"writing",
+    q:"What categories can I publish a blog in?",
+    a:"BlogSphere currently supports <strong>5 blog categories</strong>:<br><br><ul><li><strong>Travel</strong> — destinations, itineraries, travel tips, guides</li><li><strong>Food</strong> — recipes, restaurant reviews, cooking techniques, nutrition</li><li><strong>Technology</strong> — reviews, tutorials, programming, gadgets, software</li><li><strong>Education</strong> — learning tips, academic topics, skills, how-to guides</li><li><strong>Lifestyle</strong> — personal development, wellness, fashion, home, relationships</li></ul><em>Choose the most relevant category</em> — this helps readers find your blog when browsing by category." },
+
+  { cat:"writing",
+    q:"Can I delete a blog post I published?",
+    a:"Yes — authors can delete their own blog posts at any time.<br><br><strong>To delete a post:</strong><ul><li>Open the blog post you want to delete.</li><li>You will see a red <strong>Delete</strong> button at the top-right of the post (only visible to the post's author and admins).</li><li>Click Delete and confirm the action.</li></ul><strong>What gets deleted:</strong><ul><li>The blog post itself</li><li>All likes on that post</li><li>All comments on that post</li><li>The cover image file from the server</li></ul><em>Warning:</em> Deletion is permanent — there is no undo." },
+
+  { cat:"writing",
+    q:"What image formats are allowed for cover images?",
+    a:"BlogSphere accepts the following image formats:<br><br><ul><li><strong>JPG / JPEG</strong> — most common format, ideal for photos</li><li><strong>PNG</strong> — good for graphics and images with transparency</li><li><strong>GIF</strong> — animated or static image format</li><li><strong>WebP</strong> — modern format, smaller file size with great quality</li></ul><strong>File size limit:</strong> Maximum <strong>10 MB</strong> per upload.<br><br><em>Tip:</em> Compress your images before uploading using free tools like TinyPNG or Squoosh." },
+
+  { cat:"writing",
+    q:"How do I use the Quill blog editor?",
+    a:"The BlogSphere blog editor is powered by <strong>Quill.js</strong>, a rich text editor that works like a simple word processor.<br><br><strong>Formatting options available:</strong><ul><li><strong>Bold, Italic, Underline</strong> — select text and click the toolbar buttons</li><li><strong>Headings (H1, H2, H3)</strong> — use the heading dropdown for section titles</li><li><strong>Bullet points and numbered lists</strong></li><li><strong>Blockquotes</strong> — for highlighting important passages</li><li><strong>Links</strong> — select text and click the link icon to add URLs</li></ul><em>Tip:</em> Use headings (H2, H3) to break your post into scannable sections." },
+
+  { cat:"writing",
+    q:"Who can see my published blog?",
+    a:"Blog posts on BlogSphere are <strong>publicly visible</strong> — anyone who visits the site can read them, even without logging in.<br><br><strong>Visibility details:</strong><ul><li>Your blog appears on the <strong>Homepage</strong> feed immediately after publishing.</li><li>It is listed under its <strong>Category page</strong>.</li><li>It appears on your <strong>Author Profile page</strong>.</li><li>It shows up in <strong>search results</strong> when users search by title.</li></ul>Currently BlogSphere does not support draft posts — all published posts are public." },
+
+  { cat:"reading",
+    q:"How do I like a blog post?",
+    a:"Liking a post shows the author you enjoyed their content.<br><br><strong>To like a post:</strong><ul><li>Open any blog post by clicking its title.</li><li>Scroll to the <strong>Like button</strong> below the blog content.</li><li>Click the heart/like button — it will change to indicate you have liked it.</li></ul><strong>Important:</strong> You must be <strong>logged in</strong> to like posts.<br><br><em>Note:</em> Liking is a <strong>toggle</strong> — clicking again removes your like. Each user can only like a post once." },
+
+  { cat:"reading",
+    q:"How do I leave a comment on a blog?",
+    a:"Comments let you share your thoughts with the author and other readers.<br><br><strong>To comment:</strong><ul><li>Open a blog post.</li><li>Scroll to the <strong>Comments section</strong> below the post content.</li><li>Type your comment in the text box.</li><li>Click <strong>Post Comment</strong>.</li></ul><strong>Requirements:</strong><ul><li>You must be <strong>logged in</strong> to comment — readers and authors can both comment.</li><li>Comments cannot be empty.</li></ul><strong>To delete your comment:</strong> Click the Delete button next to your own comment." },
+
+  { cat:"reading",
+    q:"How do I find blogs by category?",
+    a:"BlogSphere makes it easy to browse blogs by topic.<br><br><strong>Two ways to filter by category:</strong><ul><li><strong>Navigation bar</strong> — the top navbar shows all 5 categories. Click any to view all posts in that category.</li><li><strong>Homepage filter pills</strong> — on the homepage, category filter buttons appear below the search bar. Click any category pill to filter the post list.</li></ul><em>To clear the filter</em> and see all posts again, click the <strong>All</strong> button or the BlogSphere logo." },
+
+  { cat:"reading",
+    q:"How do I search for a specific blog post?",
+    a:"BlogSphere has a built-in search feature to help you find specific posts.<br><br><strong>To search:</strong><ul><li>Go to the <strong>Homepage</strong>.</li><li>Find the <strong>search bar</strong> at the top of the page.</li><li>Type a keyword from the blog title you are looking for.</li><li>Click the <strong>Search</strong> button or press Enter.</li></ul><strong>How search works:</strong><ul><li>BlogSphere searches blog <strong>titles</strong> for your keyword.</li><li>Results are shown in order of most recently published.</li></ul><em>Tip:</em> Use short keywords (1–2 words) for broader results." },
+
+  { cat:"reading",
+    q:"How do I view an author's profile?",
+    a:"Each author on BlogSphere has a public profile page listing all their posts.<br><br><strong>To visit an author's profile:</strong><ul><li>Click the <strong>author's name</strong> on any blog post card or inside a blog post.</li><li>You will be taken to their public profile page showing their photo, bio, and all their published posts.</li></ul><strong>What you'll see on their profile:</strong><ul><li>Full name, username, and role</li><li>Bio description</li><li>Total blogs published and total likes received</li><li>All their blog posts in a card grid</li></ul>No login is required to view author profiles." },
+
+  { cat:"reading",
+    q:"What are Related Posts and how are they shown?",
+    a:"When reading a blog post, BlogSphere shows <strong>Related Posts</strong> in the sidebar.<br><br><strong>How related posts work:</strong><ul><li>BlogSphere finds other blog posts in the <strong>same category</strong> as the post you are reading.</li><li>Up to <strong>3 related posts</strong> are shown in the sidebar.</li><li>The current post is excluded from the related list.</li><li>Posts are ordered by most recently published.</li></ul><em>Purpose:</em> Related posts help you discover more content on topics you are already interested in." },
+
+  { cat:"technical",
+    q:"What is BlogSphere built with?",
+    a:"BlogSphere is a full-stack web application built with the following technologies:<br><br><ul><li><strong>Backend:</strong> Python with the Flask micro web framework</li><li><strong>Database:</strong> MySQL — stores users, blogs, comments, likes, and profiles</li><li><strong>Templating:</strong> Jinja2 — renders dynamic HTML pages from Python data</li><li><strong>Frontend:</strong> Bootstrap 5 for responsive layout, Font Awesome for icons</li><li><strong>Rich Text Editor:</strong> Quill.js — powers the blog writing experience</li><li><strong>Password Security:</strong> Werkzeug's bcrypt hashing — passwords are never stored as plain text</li><li><strong>File Uploads:</strong> Stored in the <code>static/uploads/</code> folder on the server</li></ul>" },
+
+  { cat:"technical",
+    q:"What are the user roles and permissions?",
+    a:"BlogSphere has three user roles with different levels of access:<br><br><ul><li><strong>Reader</strong> — can browse all blogs, read posts, like posts, and leave comments. Cannot write or publish.</li><li><strong>Author</strong> — all Reader permissions, plus: can create an author profile, write and publish blogs, and delete their own posts and comments.</li><li><strong>Admin</strong> — full access: all Author permissions, plus: access to the admin dashboard, manage all users (view, delete, change roles), delete any blog or comment, view platform reports and statistics.</li></ul><em>Note:</em> Only admins can change user roles." },
+
+  { cat:"technical",
+    q:"How are passwords stored — is my account secure?",
+    a:"BlogSphere takes password security seriously.<br><br><strong>How it works:</strong><ul><li>When you register, your password is <strong>hashed using bcrypt</strong> via Werkzeug's <code>generate_password_hash()</code> function.</li><li>A bcrypt hash is a one-way transformation — the original password cannot be recovered from it.</li><li>When you log in, BlogSphere uses <code>check_password_hash()</code> to compare your entered password against the stored hash — without ever decrypting it.</li><li>Plain-text passwords are <strong>never stored</strong> in the database at any point.</li></ul><em>Best practice:</em> Use a strong, unique password and never share it." },
+
+  { cat:"technical",
+    q:"What file types and sizes can be uploaded?",
+    a:"BlogSphere accepts the following uploads:<br><br><strong>Allowed file formats:</strong><ul><li>JPG / JPEG</li><li>PNG</li><li>GIF</li><li>WebP</li></ul><strong>Maximum file size:</strong> <strong>10 MB</strong> per file.<br><br><strong>Where uploads are used:</strong><ul><li>Blog post <strong>cover images</strong> — displayed at the top of the blog post</li><li>Author <strong>profile photos</strong> — displayed on the author profile page</li></ul>Files are saved in <code>static/uploads/</code>. When a blog or user is deleted, the associated image is also removed." },
+
+  { cat:"technical",
+    q:"How does the admin panel work?",
+    a:"The BlogSphere Admin Panel is accessible only to users with the <strong>admin role</strong>.<br><br><strong>To access it:</strong> Log in as admin and visit <code>/admin</code> or click the Admin link in the navbar dropdown.<br><br><strong>What the admin can do:</strong><ul><li><strong>Dashboard</strong> — view total users, blogs, comments, and likes at a glance</li><li><strong>Manage Users</strong> — view all registered users, change their roles, or delete accounts</li><li><strong>Manage Blogs</strong> — view all published posts and delete any post</li><li><strong>Manage Comments</strong> — view all comments and delete inappropriate ones</li><li><strong>Reports</strong> — detailed statistics: top blogs, top authors, registration trends, most commented posts</li></ul>" },
+
+  { cat:"technical",
+    q:"Why can't I publish a blog — it redirects me?",
+    a:"If clicking <strong>+ Write</strong> redirects you away from the create blog page, one of these reasons applies:<br><br><ul><li><strong>You are not logged in</strong> — log in first, then try again.</li><li><strong>Your account is a Reader account</strong> — only Author and Admin accounts can publish. You need to register as an Author or ask an admin to upgrade your role.</li><li><strong>You have not created an Author Profile yet</strong> — even with an Author account, BlogSphere requires you to set up your profile before publishing. Go to Profile → Create Profile, fill in your details, and then you can publish.</li></ul><em>All three conditions must be true to publish:</em> logged in + Author/Admin role + profile created." },
+
+    {
+  cat: "terms",
+  q: "What are BlogSphere's Terms of Use?",
+  a: `By using BlogSphere you agree to the following:<br><br>
+     <strong>Content Rules:</strong>
+     <ul>
+       <li>All content you post must be your own original work</li>
+       <li>No plagiarised, copied, or AI-generated content presented as original</li>
+       <li>No hate speech, harassment, or offensive material</li>
+       <li>No false information or misleading content</li>
+       <li>No spam or promotional content</li>
+     </ul>
+
+     <strong>Account Rules:</strong>
+     <ul>
+       <li>One account per person</li>
+       <li>You are responsible for all activity under your account</li>
+       <li>Do not share your login credentials</li>
+     </ul>
+
+     <strong>Platform Rights:</strong>
+     <ul>
+       <li>BlogSphere admins may remove content that violates these rules</li>
+       <li>Accounts may be suspended or banned for violations</li>
+       <li>BlogSphere is not responsible for content posted by users</li>
+     </ul>
+
+     <em>These terms apply to all users from the moment of registration.</em>`
+},
+
+{
+  cat: "terms",
+  q: "What happens if I violate the content policy?",
+  a: `BlogSphere has a 3-stage action system:<br><br>
+
+     <ul>
+       <li><strong>Stage 1 — Warning:</strong> Admin sends you a notice on your blog asking you to fix or remove the content within 48 hours.</li>
+
+       <li><strong>Stage 2 — Suspension:</strong> Your account is suspended. You cannot publish new blogs. Existing blogs are hidden until reviewed.</li>
+
+       <li><strong>Stage 3 — Permanent Ban:</strong> For serious or repeat violations, your account is permanently banned and all content removed.</li>
+     </ul>
+
+     You agreed to these consequences at the time of registration by ticking the Content Policy checkbox.`
+},
+
+{
+  cat: "terms",
+  q: "Who owns the content I post on BlogSphere?",
+  a: `You retain full ownership of the content you write and publish on BlogSphere.<br><br>
+
+     By publishing on BlogSphere, you grant the platform a non-exclusive licence to display your content to readers.<br><br>
+
+     BlogSphere does not sell, transfer, or claim ownership of your writing, images, or ideas.`
+},
+];
+
+/* ── State ── */
+let activeIdx = -1;
+let visibleIdxs = [];
+
+const catBadge = { account:'b-account', writing:'b-writing', reading:'b-reading', technical:'b-technical' };
+const catLabel = { account:'👤 Account', writing:'✏️ Writing', reading:'📖 Reading', technical:'⚙️ Technical' };
+
+/* ── Build buttons ── */
+FAQS.forEach((item, i) => {
+  const el = document.getElementById('ql-' + item.cat);
+  if (!el) return;
+  const btn = document.createElement('button');
+  btn.className = 'q-pill';
+  btn.id = 'qpill-' + i;
+  btn.textContent = item.q;
+  btn.onclick = () => showAnswer(i);
+  el.appendChild(btn);
+});
+rebuildVisible();
+
+/* ── Filter pills ── */
+function filterCat(pill, cat) {
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  document.querySelectorAll('.q-section').forEach(sec => {
+    sec.classList.toggle('active', cat === 'all' || sec.dataset.section === cat);
+  });
+  rebuildVisible();
+}
+
+function rebuildVisible() {
+  visibleIdxs = [];
+  document.querySelectorAll('.q-section.active').forEach(sec => {
+    const cat = sec.dataset.section;
+    FAQS.forEach((item, i) => { if (item.cat === cat) visibleIdxs.push(i); });
+  });
+  updateCounter();
+  updateNavBtns();
+}
+
+/* ── Show answer ── */
+function showAnswer(idx) {
+  activeIdx = idx;
+  const item = FAQS[idx];
+
+  document.querySelectorAll('.q-pill').forEach(b => b.classList.remove('active-q'));
+  const activeBtn = document.getElementById('qpill-' + idx);
+  if (activeBtn) { activeBtn.classList.add('active-q'); activeBtn.classList.add('seen'); }
+
+  const body = document.getElementById('answerBody');
+  body.innerHTML = `<div class="typing-row"><div class="td"></div><div class="td"></div><div class="td"></div><span style="font-size:12px;color:#bbb;margin-left:6px;">Loading answer…</span></div>`;
+
+  setTimeout(() => {
+    body.innerHTML = `<div class="fade-in">
+      <span class="ans-badge ${catBadge[item.cat]||''}">${catLabel[item.cat]||item.cat}</span>
+      <div class="ans-q">${item.q}</div>
+      <div class="ans-text">${item.a}</div>
+    </div>`;
+    document.getElementById('rpFooter').style.display = 'flex';
+    document.getElementById('ansTime').textContent =
+      'Answered ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    updateCounter();
+    updateNavBtns();
+  }, 480);
+}
+
+/* ── Prev / Next ── */
+function navigate(dir) {
+  const pos = visibleIdxs.indexOf(activeIdx);
+  if (pos === -1) return;
+  const np = pos + dir;
+  if (np >= 0 && np < visibleIdxs.length) showAnswer(visibleIdxs[np]);
+}
+
+function updateNavBtns() {
+  const pos = visibleIdxs.indexOf(activeIdx);
+  document.getElementById('prevBtn').disabled = pos <= 0;
+  document.getElementById('nextBtn').disabled = pos < 0 || pos >= visibleIdxs.length - 1;
+}
+
+function updateCounter() {
+  const pos = visibleIdxs.indexOf(activeIdx);
+  document.getElementById('qCounter').textContent =
+    pos >= 0 ? (pos+1) + ' / ' + visibleIdxs.length : visibleIdxs.length + ' questions';
+}
+</script>
+{% endblock %}
